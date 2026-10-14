@@ -43,17 +43,35 @@ ui <- navbarPage(
                                             inputId = "ice",
                                             label = "Law Enforcement Activity",
                                             choices = c("ICE Field Offices",
-                                                        "ICE Detention Facilities",
                                                         "287(g) Agreements",
                                                         "FBI Offices"),
                                             selected = c("ICE Field Offices",
-                                                         "ICE Detention Facilities",
                                                          "287(g) Agreements",
                                                          "FBI Offices"),
                                             multiple = TRUE,
                                             options = pickerOptions(actionsBox = TRUE,
                                                                     selectAllText = NULL,
                                                                     selectedTextFormat = "count > 2")
+                                          ),
+                                          pickerInput(
+                                            inputId = "ice287g_partner_type",
+                                            label = "287(g) Partner Type",
+                                            choices = unique(data_ice_point$lea_type)[-1],
+                                            selected = unique(data_ice_point$lea_type)[-1],
+                                            multiple = TRUE,
+                                            options = pickerOptions(actionsBox = TRUE,
+                                                                    selectAllText = NULL,
+                                                                    selectedTextFormat = "count > 1")
+                                          ),
+                                          pickerInput(
+                                            inputId = "ice287g_model_type",
+                                            label = "287(g) Partnership Model Type",
+                                            choices = unique(data_ice_point$type[data_ice_point$icetype == "287(g) Agreements"]),
+                                            selected = unique(data_ice_point$type[data_ice_point$icetype == "287(g) Agreements"]),
+                                            multiple = TRUE,
+                                            options = pickerOptions(actionsBox = TRUE,
+                                                                    selectAllText = NULL,
+                                                                    selectedTextFormat = "count > 1")
                                           ),
                                           div(style = "margin: auto; width: 90%;",
                                               sliderInput(
@@ -185,6 +203,8 @@ server <- function(input, output) {
   data_ice_point_filtered <- reactive({
     data_ice_point %>%                      ##### REVISIT AFTER NEW ICE DATA
       filter(icetype %in% input$ice) %>%
+      filter(lea_type %in% input$ice287g_partner_type | icetype != "287(g) Agreements") %>%
+      filter(type %in% input$ice287g_model_type | icetype != "287(g) Agreements") %>%
       { if(any("287(g) Agreements" %in% .$icetype)) 
         filter(., (.$signed >= input$time_287g[1] & .$signed <= input$time_287g[2]) | 
                  is.na(.$signed)) 
@@ -204,6 +224,8 @@ server <- function(input, output) {
       return()
   }) %>%
     bindEvent(input$ice, 
+              input$ice287g_partner_type,
+              input$ice287g_model_type,
               input$time_287g,
               input$capacity_detention,
               ignoreNULL = FALSE)
@@ -566,8 +588,6 @@ server <- function(input, output) {
   # generate summary readout tab
   output$summary <- renderText({
     paste0("<b>ICE Field Offices Displayed:</b> ", nrow(filter(data_ice_point_filtered(), icetype == "ICE Field Offices")),
-           "<br>
-            <b>ICE Detention Facilities Displayed:</b> ", nrow(filter(data_ice_point_filtered(), icetype == "ICE Detention Facilities")),
            "<br>
             <b>287(g) Agreements Displayed:</b> ", nrow(filter(data_ice_point_filtered(), icetype == "287(g) Agreements")),
            "<br>
