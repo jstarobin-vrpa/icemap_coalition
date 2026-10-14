@@ -603,68 +603,85 @@ server <- function(input, output) {
            </style>
            
           <p class = title><b>CONCEPT</b></p>
-          This app visualizes ICE activity and other potential election threats across Pennsylvania, 
-          overlaid on background demographics of community racial composition and political competitiveness.
+          This app visualizes ICE 287(g) agreements with local law enforcement across Pennsylvania, overlaid on background population demographics.
           <br>
           
           <br><p class = title><b>CONTENT</b></p>
-          This app contains two dashboards, one for ICE activity and election threats and the other for
-          ACLU-PA volunteer infrastructure.
+          The app contains three widgets on the Dashboard.
           <p></p>
-          <b>1. ICE Dashboard</b>
-          <br>The map visualization shows one dot for each ballot cast but uncounted in the 2024 Pennsylvania general election. Each dot is located at the
-          mailing address at which the voter requested the ballot. For this reason, some dots appear outside of Pennsylvania. These dots represent ballots
-          requested by Pennsylvanians residing out of state around the time of the election.
+          <b>1. Map</b>
+          <br>The map visualization shows one dot for each 287(g) agreement in Pennsylvania, color coded by partner agency type.
           <p></p>
           <p style = 'margin-left: 15px;'>
-            <b> — <i>Law Enforcement Activity</i></b> selects the kind of law enforcement activity to visualize in points on the map.
-            Options include ICE field offices (in red), ICE detention centers (in purple), 287(g) agreements between ICE and local
-            law enforcement (in orange), and FBI offices (in blue).
-            <br><b> — <i>Background Demographic</i></b> selects the demographic to display. Users can turn off the demographic display by deselecting 'Show
-            Demographic' in the 'Map Aesthetics' menu. The app takes its racial demographic categories from the American Community Survey, adminstered
-            by the US Census Bureau.
-            <br><b> — <i>287(g) Dates Signed</i></b> subsets all 287(g) agreements by the date each participating local law
-            enforcement agency signed its agreement with ICE. Available 287(g) agreements span dates from ____ to ____.
-            <br><b> — <i>Background Demographic</i></b> selects the demographic to display for the selected background geography. 
-            Options include a geography's electoral race characterization (Standard, Competitive, or No Election), total population,
-            total non-white population, and total Hispanic or Latino population.
-            <br><b> — <i>Geography</i></b> selects which background geography to map. Options include Pennsylvania counties, 
-            municipalities, US House Districts, General Assembly Senate Districts, and General Assembly House Districts.
-            
-            NOTE ON HAND GEOCODING FROM GOOGLE MAPS
-          <br>
-          <p></p>
-            <p style = 'margin-left: 15px;'>
-            <b>MAP CLICKABILITY</b>
-            <br>Users can access quick geographically-specific demographic statistics by clicking on geographies of interest. To close a popup, click the
-            selected geography again. To close all popups, click the 'Clear All Popups' button in the control panel.
-            </p>
-          <b>2. MAPPED VOTER CONTACTS</b>
-          <p style = 'margin-left: 15px;'>
-            This widget produces a table with the name, mailing address, contact information, and county of registration of each voter in the current selection
-            of ballots. Users can search for specific names and addresses in the search bar at the widget's upper right-hand corner.
+            <b> — <i>Partner Type</i></b> selects the kinds of law enforcement agency partnered with ICE to display.
+            <br><b> — <i>Partnership Model Type</i></b> selects the kinds of 287(g) partnership model to display.
+            <br><b> — <i>287(g) Dates Signed</i></b> subsets all 287(g) agreements by the date each partner agency signed its agreement with ICE. 
+            Available 287(g) agreements span dates from ", format(min(data_ice_point$signed, na.rm = TRUE), format = "%m/%d/%Y"), " to ", 
+           format(max(data_ice_point$signed, na.rm = TRUE), format = "%m/%d/%Y"), ".
+            <br><b> — <i>Background Demographic</i></b> selects the demographic to display at the given geography level (e.g., county or municipality).
+            Demographics are pulled from the US Census Bureau and are available only at the county level for this app. Available demographics include 
+            a geography's total population, total non-white population, and total Hispanic or Latino population.
+            <br><b> — <i>Geography</i></b> selects which background geography to map. Options include Pennsylvania counties and municipalities.
           <br>
           </p>
-          <b>3. COUNTY-LEVEL READOUT</b>
+          <b>2. 287(g) Selection Table</b>
           <p style = 'margin-left: 15px;'>
-            This widget produces a summary table with the county-level totals of ballots in the current selection.
+            This widget produces a table with the partner agency, partnership model type, and other background information for each 287(g) agreement currently selected.
+            Users can download this table as a .CSV file with the button at the widget's upper left-hand corner. Users can search for specific counties, municipalities,
+            or other identifying information with the search bar at the widget's upper right-hand corner.
           <br>
           </p>
-          <b>4. STATEWIDE READOUT</b>
-          <p style = 'margin-left: 15px; margin-bottom: 0;'>
-            This widget produces several statewide summary statistics of ballots in the current selection, including the raw number of ballots in the current selection
-            and the percentage of selected ballots in the total set of uncounted mail ballots (excluding those marked 'PEND - NOT YET RETURNED' and 'CANC - LABEL
-            CANCELLED'). The widget also breaks down the total set of uncounted mail ballots into three broad categories: all those canceled ('CANC - '), pending
-            ('PEND - '), and other ('NO SURE CODE - ').
+          <b>3. Background Demographics Table</b>
+          <p style = 'margin-left: 15px;'>
+            This widget produces a table with the available background demographics for all geographies of the type currently selected.
           </p>
           
+          <br><p class = title><b>METHODOLOGY</b></p>
+          This app involves two significant manipulations of source data: geocoding 287(g) agreements and computing certain background demographics.
+          
+          <p></p>
+            <p style = 'margin-left: 15px;'>
+            <b>Geocoding</b>
+            <br>To geocode ICE records of 287(g) agreements with local law enforcement, ICE records were matched with Pennsylvania Department of Transportation 
+            records of municipality boundaries and US Census Bureau county boundaries. Where the jurisdiction of an ICE record matched a PA DOT municipality record 
+            exactly, the associated 287(g) agreement was geocoded at that municipality's centroid. Where an ICE record named county-wide or intra-county regional 
+            jurisdiction, the record's 287(g) agreements was geocoded at the county's centroid or, in cases where the ICE record referenced a compass direction (e.g.,
+            'northwest,' 'eastern,' etc.), at a point slightly offset from the centroid in the specificed direction. ICE records which did not match any PA DOT records 
+            but which specified jurisdictions at the municipal level were handcoded using coordinates from Google Maps. In total, ", (stats_handcoded$total - stats_handcoded$count),
+           " ICE records (", scales::label_percent()(1 - stats_handcoded$prop), ") were handcoded algorithmically and the remaining ", stats_handcoded$count, " records (",
+           scales::label_percent()(stats_handcoded$prop), ") were handcoded.
+            </p>
+            
+          <p></p>
+            <p style = 'margin-left: 15px;'>
+            <b>Demographic Computation</b>
+            <br>County-level background demographics for total population and total Hispanic or Latino population were pulled directly from the US Census 
+            Bureau's American Community Survey 5-Year Data. County-level background demographics for total non-white population were estimated by subtracting
+            the 5-year ACS estimates of 'White Alone, Not Hispanic or Latino' populations from total population estimates for each county.
+            </p>
+          
           <br><p class = title><b>ATTRIBUTION</b></p>
-          This product uses the Census Bureau Data API but is not endorsed or certified by the Census Bureau.
-          <br>ICE Field Offices, Sub-Offices, Detention Centers: 'government data published by ICE, collated by the Deportation Data Project, and analyzed by [your organization].'
+          Data on 287(g) agreements in Pennsylvania are provided by U.S. Immigrations and Customs Enforcement. For the source file, see the link below:
+          <br>
+          <a href=https://www.ice.gov/identify-and-arrest/287g>ICE 287(g) Participating Agencies</a>
+          <br>
+          <p></p>
+          This product uses the Census Bureau Data API but is not endorsed or certified by the Census Bureau. In particular, the app uses
+          Census Bureau data for county-level demographics and geometry.
+          <br>
+          <p></p>
+          Data on Pennsylvania municipal boundaries and county FIPS codes, used to identify each municipality's encompassing county or counties, are provided by the 
+          Pennsylvania Department of Transportation and accessed through the Commonwealth of Pennsylvania Open Data Portal API. For the source files, see the links below:
+          <br>
+          <a href=https://data.pa.gov/Geospatial-Data/PA-Municipality-Boundaries/ednf-5bi6/about_data>PA Municipality Boundaries</a>
+          <br>
+          <a href=https://data.pa.gov/Census-Economic/Federal-Information-Processing-Standard-FIPS-Codes/44ch-j9ei/about_data>PA County FIPS codes</a>
           <br>
           
           <br><p class = title><b>AUTHOR</b></p>
-          Jack Starobin, Voting Rights Litigation Associate, ACLU-PA 2026
+          Jack Starobin
+          <br>Voting Rights Litigation Associate
+          <br>ACLU-PA, 2026
           <br>
           <br>")
   })
